@@ -67,13 +67,13 @@ class XWalkExtensionService : public content::NotificationObserver {
   // The server that handles in process extensions will live in the
   // extension_thread_.
   base::Thread extension_thread_;
-  scoped_ptr<XWalkExtensionServer> in_process_extensions_server_;
+  XWalkExtensionServer* in_process_extensions_server_;
 
   // This object lives on the IO-thread.
   ExtensionServerMessageFilter* in_process_server_message_filter_;
 
   // This object lives on the IO-thread.
-  scoped_ptr<XWalkExtensionProcessHost> extension_process_host_;
+  XWalkExtensionProcessHost* extension_process_host_;
 
   content::NotificationRegistrar registrar_;
 

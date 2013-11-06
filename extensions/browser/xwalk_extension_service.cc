@@ -84,7 +84,7 @@ XWalkExtensionService::XWalkExtensionService()
       in_process_server_message_filter_(NULL) {
   CommandLine* cmd_line = CommandLine::ForCurrentProcess();
   if (!cmd_line->HasSwitch(switches::kXWalkDisableExtensionProcess))
-    extension_process_host_.reset(new XWalkExtensionProcessHost());
+    extension_process_host_ = new XWalkExtensionProcessHost();
 
   registrar_.Add(this, content::NOTIFICATION_RENDERER_PROCESS_TERMINATED,
                  content::NotificationService::AllBrowserContextsAndSources());
@@ -92,7 +92,7 @@ XWalkExtensionService::XWalkExtensionService()
   extension_thread_.Start();
 
   // The server is created here but will live on the extension thread.
-  in_process_extensions_server_.reset(new XWalkExtensionServer());
+  in_process_extensions_server_ = new XWalkExtensionServer();
 
   if (!g_register_extensions_callback.is_null())
     g_register_extensions_callback.Run(this);
@@ -113,7 +113,7 @@ void XWalkExtensionService::RegisterExternalExtensionsForPath(
   if (extension_process_host_) {
     extension_process_host_->RegisterExternalExtensions(path);
   } else {
-    RegisterExternalExtensionsInDirectory(in_process_extensions_server_.get(),
+    RegisterExternalExtensionsInDirectory(in_process_extensions_server_,
                                           path);
   }
 }
@@ -132,7 +132,7 @@ void XWalkExtensionService::OnRenderProcessHostCreated(
   // it from the Channel later during a RenderProcess shutdown.
   in_process_server_message_filter_ =
       new ExtensionServerMessageFilter(extension_thread_.message_loop_proxy(),
-                                       in_process_extensions_server_.get());
+                                       in_process_extensions_server_);
   channel->AddFilter(in_process_server_message_filter_);
   in_process_extensions_server_->Initialize(channel);
 
@@ -180,11 +180,11 @@ void XWalkExtensionService::OnRenderProcessHostClosed(
   render_process_host_->GetChannel()->RemoveFilter(
       in_process_server_message_filter_);
   extension_thread_.message_loop()->DeleteSoon(
-      FROM_HERE, in_process_extensions_server_.release());
+      FROM_HERE, in_process_extensions_server_);
 
   if (extension_process_host_) {
     BrowserThread::DeleteSoon(BrowserThread::IO, FROM_HERE,
-                              extension_process_host_.release());
+                              extension_process_host_);
   }
 }
 
