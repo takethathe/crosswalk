@@ -22,16 +22,15 @@ namespace db_store_constants {
 
   extern const char kCreateAppTableOp[];
   extern const char kCreateEventTableOp[];
-  extern const char kGetAllRowsFromAppEventTableOp[];
   extern const char kSetApplicationWithBindOp[];
   extern const char kUpdateApplicationWithBindOp[];
   extern const char kDeleteApplicationWithBindOp[];
-  extern const char kSetManifestWithBindOp[];
-  extern const char kSetInstallTimeWithBindOp[];
-  extern const char kSetApplicationPathWithBindOp[];
+  extern const char kGetApplicationWithBindOp[];
+  extern const char kGetInstalledApplicationsOp[];
   extern const char kInsertEventsWithBindOp[];
   extern const char kUpdateEventsWithBindOp[];
   extern const char kDeleteEventsWithBindOp[];
+  extern const char kGetEventsWithBindOp[];
 
 }  // namespace db_store_constants
 }  // namespace xwalk

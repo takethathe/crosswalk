@@ -10,7 +10,7 @@
 
 #include "base/memory/ref_counted.h"
 #include "xwalk/application/common/application.h"
-#include "xwalk/application/common/db_store_sqlite_impl.h"
+#include "xwalk/application/common/db_store.h"
 
 namespace xwalk {
 class Runtime;
@@ -22,7 +22,6 @@ namespace application {
 
 class ApplicationStore: public DBStore::Observer {
  public:
-  typedef DBStoreSqliteImpl DBStoreImpl;
   typedef std::map<std::string, scoped_refptr<const Application> >
       ApplicationMap;
   typedef std::map<std::string, scoped_refptr<const Application> >::iterator
@@ -41,6 +40,8 @@ class ApplicationStore: public DBStore::Observer {
 
   bool RemoveApplication(const std::string& id);
 
+  bool UpdateApplication(scoped_refptr<const Application> application);
+
   bool Contains(const std::string& app_id) const;
 
   scoped_refptr<const Application> GetApplicationByID(
@@ -55,13 +56,13 @@ class ApplicationStore: public DBStore::Observer {
   // Implement the DBStore::Observer.
   virtual void OnDBValueChanged(const std::string& key,
                                 const base::Value* value) OVERRIDE;
-  virtual void OnInitializationCompleted(bool succeeded) OVERRIDE;
+  virtual void OnDBInitializationCompleted(bool succeeded) OVERRIDE;
 
  private:
   void InitApplications(const base::DictionaryValue* value);
   bool Insert(scoped_refptr<const Application> application);
   xwalk::RuntimeContext* runtime_context_;
-  scoped_ptr<DBStoreImpl> db_store_;
+  scoped_ptr<DBStore> db_store_;
   scoped_ptr<ApplicationMap> applications_;
   DISALLOW_COPY_AND_ASSIGN(ApplicationStore);
 };

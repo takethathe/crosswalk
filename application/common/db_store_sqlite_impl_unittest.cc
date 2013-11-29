@@ -36,7 +36,7 @@ TEST_F(DBStoreSqliteImplTest, CreateDBFile) {
       temp_dir_.path().Append(DBStoreSqliteImpl::kDBFileName)));
 }
 
-TEST_F(DBStoreSqliteImplTest, DBInsert) {
+TEST_F(DBStoreSqliteImplTest, DBQueryAndInsert) {
   TestInit();
   scoped_ptr<base::DictionaryValue> value(new base::DictionaryValue);
   value->SetString(ApplicationStore::kApplicationPath, "no path");
@@ -45,20 +45,17 @@ TEST_F(DBStoreSqliteImplTest, DBInsert) {
   value->Set(ApplicationStore::kManifestPath, manifest);
   value->SetDouble(ApplicationStore::kInstallTime, 0);
   std::string id("test_id");
-  db_store_->SetValue(id, value.release());
+  ASSERT_TRUE(db_store_->Insert(id, value.release()));
 
   scoped_ptr<base::DictionaryValue> old_value(
-      db_store_->GetApplications()->DeepCopy());
-  ASSERT_TRUE(old_value->HasKey(id));
-  // Refresh the database cache from db file.
-  ASSERT_TRUE(db_store_->InitDB());
-  EXPECT_TRUE(old_value->Equals(db_store_->GetApplications()));
+      static_cast<base::DictionaryValue*>(db_store_->Query("")->DeepCopy()));
+  EXPECT_TRUE(old_value->HasKey(id));
 }
 
 TEST_F(DBStoreSqliteImplTest, DBDelete) {
   TestInit();
   scoped_ptr<base::DictionaryValue> old_value(
-      db_store_->GetApplications()->DeepCopy());
+      static_cast<base::DictionaryValue*>(db_store_->Query("")->DeepCopy()));
   scoped_ptr<base::DictionaryValue> value(new base::DictionaryValue);
   value->SetString(ApplicationStore::kApplicationPath, "no path");
   base::DictionaryValue* manifest = new base::DictionaryValue;
@@ -66,12 +63,9 @@ TEST_F(DBStoreSqliteImplTest, DBDelete) {
   value->Set(ApplicationStore::kManifestPath, manifest);
   value->SetDouble(ApplicationStore::kInstallTime, 0);
   std::string id("test_id");
-  db_store_->SetValue(id, value.release());
+  ASSERT_TRUE(db_store_->Insert(id, value.release()));
 
-  ASSERT_TRUE(db_store_->Remove(id));
-  // Refresh the database cache from db file.
-  ASSERT_TRUE(db_store_->InitDB());
-  EXPECT_TRUE(old_value->Equals(db_store_->GetApplications()));
+  EXPECT_TRUE(db_store_->Delete(id));
 }
 
 TEST_F(DBStoreSqliteImplTest, DBUpgradeToV1) {
@@ -97,78 +91,10 @@ TEST_F(DBStoreSqliteImplTest, DBUpgradeToV1) {
   db_store_.reset(new DBStoreSqliteImpl(temp_dir_.path()));
   ASSERT_TRUE(db_store_->InitDB());
   ASSERT_FALSE(base::PathExists(v0_db_file));
-  EXPECT_TRUE(db_value->Equals(db_store_->GetApplications()));
+  EXPECT_TRUE(db_value->Equals(db_store_->Query("")));
 }
 
-TEST_F(DBStoreSqliteImplTest, DBUpdate1) {
-  TestInit();
-  scoped_ptr<base::DictionaryValue> value(new base::DictionaryValue);
-  value->SetString(ApplicationStore::kApplicationPath, "path1");
-  base::DictionaryValue* manifest = new base::DictionaryValue;
-  manifest->SetString("a", "b");
-  value->Set(ApplicationStore::kManifestPath, manifest);
-  value->SetDouble(ApplicationStore::kInstallTime, 0);
-  std::string id("test_id");
-  db_store_->SetValue(id, value.release());
-
-  db_store_->SetValue(id+"."+ApplicationStore::kApplicationPath,
-                      base::Value::CreateStringValue("path2"));
-
-  ASSERT_TRUE(db_store_->InitDB());
-  std::string path;
-  ASSERT_TRUE(db_store_->GetApplications()->GetString(
-      id+"."+ApplicationStore::kApplicationPath,
-      &path));
-  EXPECT_EQ(path.compare("path2"), 0);
-}
-
-TEST_F(DBStoreSqliteImplTest, DBUpdate2) {
-  TestInit();
-  scoped_ptr<base::DictionaryValue> value(new base::DictionaryValue);
-  value->SetString(ApplicationStore::kApplicationPath, "path");
-  base::DictionaryValue* manifest = new base::DictionaryValue;
-  manifest->SetString("a", "b");
-  value->Set(ApplicationStore::kManifestPath, manifest);
-  value->SetDouble(ApplicationStore::kInstallTime, 0);
-  std::string id("test_id");
-  db_store_->SetValue(id, value.release());
-
-  db_store_->SetValue(id+"."+ApplicationStore::kInstallTime,
-                      base::Value::CreateDoubleValue(1));
-
-  ASSERT_TRUE(db_store_->InitDB());
-  double time;
-  ASSERT_TRUE(db_store_->GetApplications()->GetDouble(
-      id+"."+ApplicationStore::kInstallTime,
-      &time));
-  EXPECT_EQ(time, 1);
-}
-
-TEST_F(DBStoreSqliteImplTest, DBUpdate3) {
-  TestInit();
-  scoped_ptr<base::DictionaryValue> value(new base::DictionaryValue);
-  value->SetString(ApplicationStore::kApplicationPath, "path");
-  base::DictionaryValue* manifest = new base::DictionaryValue;
-  manifest->SetString("a", "b");
-  value->Set(ApplicationStore::kManifestPath, manifest);
-  value->SetDouble(ApplicationStore::kInstallTime, 0);
-  std::string id("test_id");
-  db_store_->SetValue(id, value.release());
-
-  base::DictionaryValue* new_manifest = manifest->DeepCopy();
-  new_manifest->SetString("a", "c");
-  db_store_->SetValue(id+"."+ApplicationStore::kManifestPath,
-                      new_manifest);
-
-  ASSERT_TRUE(db_store_->InitDB());
-  std::string v;
-  ASSERT_TRUE(db_store_->GetApplications()->GetString(
-      id+"."+ApplicationStore::kManifestPath+".a",
-      &v));
-  EXPECT_EQ(v.compare("c"), 0);
-}
-
-TEST_F(DBStoreSqliteImplTest, DBUpdate4) {
+TEST_F(DBStoreSqliteImplTest, DBUpdate) {
   TestInit();
   scoped_ptr<base::DictionaryValue> value(new base::DictionaryValue);
   value->SetString(ApplicationStore::kApplicationPath, "path1");
@@ -178,7 +104,7 @@ TEST_F(DBStoreSqliteImplTest, DBUpdate4) {
   value->SetDouble(ApplicationStore::kInstallTime, 0);
   std::string id("test_id");
   scoped_ptr<base::DictionaryValue> new_value(value->DeepCopy());
-  db_store_->SetValue(id, value.release());
+  ASSERT_TRUE(db_store_->Insert(id, value.release()));
 
   new_value->SetString(ApplicationStore::kApplicationPath, "path2");
   base::DictionaryValue* new_manifest = manifest->DeepCopy();
@@ -186,11 +112,10 @@ TEST_F(DBStoreSqliteImplTest, DBUpdate4) {
   new_value->Set(ApplicationStore::kManifestPath, new_manifest);
   new_value->SetDouble(ApplicationStore::kInstallTime, 1);
   scoped_ptr<base::DictionaryValue> changed_value(new_value->DeepCopy());
-  db_store_->SetValue(id, new_value.release());
+  ASSERT_TRUE(db_store_->Update(id, new_value.release()));
 
-  ASSERT_TRUE(db_store_->InitDB());
   scoped_ptr<base::DictionaryValue> db_cache(
-      db_store_->GetApplications()->DeepCopy());
+      static_cast<base::DictionaryValue*>(db_store_->Query("")->DeepCopy()));
   base::DictionaryValue* db_value;
   ASSERT_TRUE(db_cache->GetDictionary(id, &db_value));
   EXPECT_TRUE(changed_value->Equals(db_value));

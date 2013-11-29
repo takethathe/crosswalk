@@ -33,11 +33,12 @@ const char kCreateEventTableOp[] =
     "FOREIGN KEY (id) REFERENCES applications(id)"
     "ON DELETE CASCADE)";
 
-const char kGetAllRowsFromAppEventTableOp[] =
-    "SELECT applications.id, manifest, path, install_time, event_names "
-    "FROM applications "
-    "LEFT JOIN registered_events "
-    "ON applications.id = registered_events.id";
+const char kGetApplicationWithBindOp[] =
+    "SELECT id, manifest, path, install_time "
+    "FROM applications WHERE id = ?";
+
+const char kGetInstalledApplicationsOp[] =
+    "SELECT id, manifest, path, install_time FROM applications";
 
 const char kSetApplicationWithBindOp[] =
     "INSERT INTO applications (manifest, path, install_time, id) "
@@ -50,15 +51,6 @@ const char kUpdateApplicationWithBindOp[] =
 const char kDeleteApplicationWithBindOp[] =
     "DELETE FROM applications WHERE id = ?";
 
-const char kSetManifestWithBindOp[] =
-    "UPDATE applications SET manifest = ? WHERE id = ?";
-
-const char kSetInstallTimeWithBindOp[] =
-    "UPDATE applications SET install_time = ? WHERE id = ?";
-
-const char kSetApplicationPathWithBindOp[] =
-    "UPDATE applications SET path = ? WHERE id = ?";
-
 const char kInsertEventsWithBindOp[] =
     "INSERT INTO registered_events (event_names, id) "
     "VALUES(?,?)";
@@ -68,6 +60,9 @@ const char kUpdateEventsWithBindOp[] =
 
 const char kDeleteEventsWithBindOp[] =
     "DELETE FROM registered_events WHERE id = ?";
+
+const char kGetEventsWithBindOp[] =
+    "SELECT event_names FROM registered_events WHERE id = ?";
 
 }  // namespace db_store_constants
 }  // namespace xwalk

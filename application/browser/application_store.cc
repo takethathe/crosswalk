@@ -7,6 +7,7 @@
 #include <utility>
 
 #include "xwalk/application/common/application_file_util.h"
+#include "xwalk/application/common/db_store_sqlite_impl.h"
 #include "xwalk/runtime/browser/runtime_context.h"
 
 namespace xwalk {
@@ -29,7 +30,7 @@ inline const std::string GetRegisteredEventsPath(
 
 ApplicationStore::ApplicationStore(xwalk::RuntimeContext* runtime_context)
     : runtime_context_(runtime_context),
-      db_store_(new DBStoreImpl(runtime_context->GetPath())),
+      db_store_(new DBStoreSqliteImpl(runtime_context->GetPath())),
       applications_(new ApplicationMap) {
   db_store_->AddObserver(this);
   db_store_->InitDB();
@@ -44,7 +45,16 @@ bool ApplicationStore::AddApplication(
   if (Contains(application->ID()))
     return true;
 
-  if (!db_store_->Insert(application.get(), base::Time::Now()) ||
+  scoped_ptr<base::DictionaryValue> value(new base::DictionaryValue);
+  base::DictionaryValue* manifest =
+      application->GetManifest()->value()->DeepCopy();
+  value->Set(ApplicationStore::kManifestPath, manifest);
+  value->SetString(ApplicationStore::kApplicationPath,
+                   application->Path().value());
+  value->SetDouble(ApplicationStore::kInstallTime,
+                   base::Time::Now().ToDoubleT());
+
+  if (!db_store_->Insert(application->ID(), value.get()) ||
       !Insert(application))
     return false;
 
@@ -52,18 +62,41 @@ bool ApplicationStore::AddApplication(
 }
 
 bool ApplicationStore::RemoveApplication(const std::string& id) {
-  if (applications_->erase(id) != 1) {
+  ApplicationMapIterator it = applications_->find(id);
+  if (it == applications_->end()) {
     LOG(ERROR) << "Application " << id << " is invalid.";
     return false;
   }
+  applications_->erase(it);
 
-  if (!db_store_->Remove(id)) {
+  if (!db_store_->Delete(id)) {
     LOG(ERROR) << "Error occurred while trying to remove application"
                   "information with id "
                << id << " from database.";
     return false;
   }
   return true;
+}
+
+bool ApplicationStore::UpdateApplication(
+    scoped_refptr<const Application> application) {
+  bool ret = false;
+  ApplicationMapIterator it = applications_->find(application->ID());
+  if (it != applications_->end()) {
+    scoped_ptr<base::DictionaryValue> value(new base::DictionaryValue);
+    base::DictionaryValue* manifest =
+        application->GetManifest()->value()->DeepCopy();
+    value->Set(ApplicationStore::kManifestPath, manifest);
+    value->SetString(ApplicationStore::kApplicationPath,
+                     application->Path().value());
+    value->SetDouble(ApplicationStore::kInstallTime,
+                     base::Time::Now().ToDoubleT());
+    if (db_store_->Update(application->ID(), value.get())) {
+      it->second = application;
+      ret = true;
+    }
+  }
+  return ret;
 }
 
 bool ApplicationStore::Contains(const std::string& app_id) const {
@@ -86,33 +119,20 @@ ApplicationStore::GetInstalledApplications() const {
 }
 
 base::ListValue* ApplicationStore::GetApplicationEvents(const std::string& id) {
-  base::DictionaryValue* db = db_store_->GetApplications();
-  if (!db)
-    return NULL;
-
-  base::DictionaryValue* value = NULL;
-  base::ListValue* events = NULL;
-  if (!db->GetDictionary(id, &value) ||
-      !value->GetList(ApplicationStore::kRegisteredEvents, &events))
-    return NULL;
-  return events;
+  return static_cast<base::ListValue*>(
+      db_store_->Query(GetRegisteredEventsPath(id)));
 }
 
 bool ApplicationStore::SetApplicationEvents(
     const std::string& id,
     base::ListValue* events) {
-  base::DictionaryValue* db = db_store_->GetApplications();
-  if (!db || !db->HasKey(id)) {
-    LOG(ERROR) << "Application " << id << " is not installed. "
-               << "Could not set system events for it.";
-    return false;
-  }
-
-  if (!events)
-    return db_store_->Remove(GetRegisteredEventsPath(id));
-
-  db_store_->SetValue(GetRegisteredEventsPath(id), events);
-  return true;
+  base::ListValue* old_events = GetApplicationEvents(id);
+  if (!old_events)
+    return db_store_->Insert(GetRegisteredEventsPath(id), events);
+  else if (!old_events->Equals(events))
+    return db_store_->Update(GetRegisteredEventsPath(id), events);
+  else
+    return true;
 }
 
 void ApplicationStore::InitApplications(const base::DictionaryValue* db) {
@@ -159,9 +179,12 @@ void ApplicationStore::OnDBValueChanged(const std::string& key,
                                         const base::Value* value) {
 }
 
-void ApplicationStore::OnInitializationCompleted(bool succeeded) {
-  if (succeeded)
-    InitApplications(db_store_->GetApplications());
+void ApplicationStore::OnDBInitializationCompleted(bool succeeded) {
+  if (succeeded) {
+    scoped_ptr<base::DictionaryValue> apps(
+        static_cast<base::DictionaryValue*>(db_store_->Query("")));
+    InitApplications(apps.get());
+  }
 }
 
 }  // namespace application

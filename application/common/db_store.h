@@ -24,17 +24,17 @@ class DBStore {
     virtual void OnDBValueChanged(const std::string& key,
                                   const base::Value* value) = 0;
     // Notification about the DBStore being fully initialized.
-    virtual void OnInitializationCompleted(bool succeeded) = 0;
+    virtual void OnDBInitializationCompleted(bool succeeded) = 0;
 
    protected:
     virtual ~Observer() {}
   };
   explicit DBStore(base::FilePath path);
   virtual ~DBStore();
-  virtual bool Insert(const Application* application,
-                      const base::Time install_time) = 0;
-  virtual bool Remove(const std::string& key) = 0;
-  base::DictionaryValue* GetApplications() const { return db_.get(); }
+  virtual bool Insert(const std::string& key, base::Value* value) = 0;
+  virtual bool Update(const std::string& key, base::Value* value) = 0;
+  virtual bool Delete(const std::string& key) = 0;
+  virtual base::Value* Query(const std::string& key) = 0;
 
   void AddObserver(DBStore::Observer* observer) {
     observers_.AddObserver(observer);
@@ -47,12 +47,7 @@ class DBStore {
   // observer on completion.
   virtual bool InitDB() = 0;
 
-  // Set value in database, resulting is calling OnDBValueChanged for
-  // each observer.
-  virtual void SetValue(const std::string& key, base::Value* value) = 0;
-
  protected:
-  scoped_ptr<base::DictionaryValue> db_;
   base::FilePath data_path_;
   ObserverList<DBStore::Observer, true> observers_;
 };
