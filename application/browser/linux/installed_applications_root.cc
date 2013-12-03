@@ -10,7 +10,7 @@
 #include "base/files/file_path.h"
 #include "dbus/bus.h"
 #include "dbus/message.h"
-#include "xwalk/application/browser/application_store.h"
+#include "xwalk/application/browser/application_storage.h"
 #include "xwalk/dbus/property_exporter.h"
 #include "xwalk/dbus/xwalk_service_name.h"
 #include "xwalk/application/browser/linux/installed_application_object.h"
@@ -129,9 +129,9 @@ void InstalledApplicationsRoot::OnApplicationUninstalled(
 }
 
 void InstalledApplicationsRoot::CreateInitialObjects() {
-  ApplicationStore::ApplicationMap* apps =
+  const ApplicationData::ApplicationDataMap* apps =
       application_service_->GetInstalledApplications();
-  ApplicationStore::ApplicationMap::iterator it;
+  ApplicationData::ApplicationDataMap::const_iterator it;
   for (it = apps->begin(); it != apps->end(); ++it)
     installed_apps_.push_back(CreateObject(it->second));
 }

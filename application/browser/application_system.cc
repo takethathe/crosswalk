@@ -38,11 +38,11 @@ ApplicationSystem::~ApplicationSystem() {
 bool ApplicationSystem::HandleApplicationManagementCommands(
     const CommandLine& cmd_line, const GURL& url) {
   if (cmd_line.HasSwitch(switches::kListApplications)) {
-    ApplicationStore::ApplicationMap* apps =
+    const ApplicationData::ApplicationDataMap* apps =
         application_service_->GetInstalledApplications();
     LOG(INFO) << "Application ID                       Application Name";
     LOG(INFO) << "-----------------------------------------------------";
-    ApplicationStore::ApplicationMapIterator it;
+    ApplicationData::ApplicationDataMap::const_iterator it;
     for (it = apps->begin(); it != apps->end(); ++it)
       LOG(INFO) << it->first << "     " << it->second->Name();
     LOG(INFO) << "-----------------------------------------------------";

@@ -48,6 +48,10 @@ class ApplicationData : public base::RefCountedThreadSafe<ApplicationData> {
 
   typedef std::map<const std::string, linked_ptr<ManifestData> >
       ManifestDataMap;
+  typedef std::map<std::string, scoped_refptr<ApplicationData> >
+      ApplicationDataMap;
+  typedef std::map<std::string, scoped_refptr<ApplicationData> >::iterator
+      ApplicationDataMapIterator;
 
   // A base class for parsed manifest data that APIs want to store on
   // the application. Related to base::SupportsUserData, but with an immutable
@@ -107,6 +111,10 @@ class ApplicationData : public base::RefCountedThreadSafe<ApplicationData> {
     return manifest_.get();
   }
 
+  // System events
+  void SetEvents(const std::vector<std::string>& events);
+  const std::vector<std::string>& GetEvents() const;
+
   // App-related.
   bool IsPlatformApp() const;
   bool IsHostedApp() const;
@@ -158,6 +166,9 @@ class ApplicationData : public base::RefCountedThreadSafe<ApplicationData> {
 
   // Any warnings that occurred when trying to create/parse the application.
   std::vector<InstallWarning> install_warnings_;
+
+  // System events
+  std::vector<std::string> events_;
 
   // The base application url for the application.
   GURL application_url_;

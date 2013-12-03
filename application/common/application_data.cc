@@ -267,5 +267,13 @@ bool ApplicationData::LoadManifestVersion(string16* error) {
   return true;
 }
 
+void ApplicationData::SetEvents(const std::vector<std::string>& events) {
+  events_ = events;
+}
+
+const std::vector<std::string>& ApplicationData::GetEvents() const {
+  return events_;
+}
+
 }   // namespace application
 }   // namespace xwalk
