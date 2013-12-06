@@ -10,8 +10,9 @@
 #include "base/memory/scoped_ptr.h"
 #include "base/observer_list.h"
 #include "xwalk/application/browser/application_storage.h"
-#include "xwalk/runtime/browser/runtime_context.h"
 #include "xwalk/application/common/application_data.h"
+#include "xwalk/application/common/permission_constants.h"
+#include "xwalk/runtime/browser/runtime_context.h"
 
 namespace xwalk {
 class RuntimeContext;
@@ -50,6 +51,11 @@ class ApplicationService {
 
   void AddObserver(Observer* observer);
   void RemoveObserver(Observer* observer);
+
+  typedef base::Callback<void (const RuntimePermission&)> RuntimePermCallback;
+  void CheckAPIAccessControl(const std::string app_id,
+      const std::string extension_name,
+      const std::string api_name, RuntimePermCallback callback);
 
  private:
   bool Launch(scoped_refptr<const ApplicationData> application);

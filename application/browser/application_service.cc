@@ -228,5 +228,94 @@ bool ApplicationService::Launch(
       application);
 }
 
+void ApplicationService::CheckAPIAccessControl(const std::string app_id,
+    const std::string extension_name,
+    const std::string api_name, RuntimePermCallback callback) {
+  // FIXME(Bai): Uncomment this after the Application class is ready.
+  /*
+  Application* app = GetApplicationByID(app_id);
+  if (app == NULL) {
+    LOG(ERROR) << "No running application found with ID: "
+      << app_id;
+    base::MessageLoop::current()->PostTask(
+        FROM_HERE, base::Bind(callback, INVALID_RUNTIME_PERM));
+    return;
+  }
+  if (!app->HasExtension(extension_name)) {
+    LOG(ERROR) << "Can not find extension: "
+      << extension_name << " of Application with ID: "
+      << app_id;
+    base::MessageLoop::current()->PostTask(
+        FROM_HERE, base::Bind(callback, INVALID_RUNTIME_PERM));
+    return;
+  }
+  // Permission name should have been resigtered at extension initialization.
+  std::string permission_name;
+  permission_name = app->GetPermissionName(extension_name, api_name);
+  if (permission_name.size() == 0) {
+    LOG(ERROR) << "API: " << api_name << " of extension: "
+      << extension_name << " not registered!";
+    base::MessageLoop::current()->PostTask(
+        FROM_HERE, base::Bind(callback, INVALID_RUNTIME_PERM));
+    return;
+  }
+  // Okay, since we have the permission name, let's get down to the policies.
+  // First, find out whether the policy is stored for the current session.
+  StoredPermission perm = app->GetPermission(permission_name);
+  if (perm != INVALID_STORED_PERM) {
+    // "ASK" should not be in the session storage.
+    DCHECK(perm != ASK);
+    if (perm == ALLOW) {
+      base::MessageLoop::current()->PostTask(
+          FROM_HERE, base::Bind(callback, ALLOW_SESSION));
+      return;
+    }
+    if (perm == DENY) {
+      base::MessageLoop::current()->PostTask(
+          FROM_HERE, base::Bind(callback, DENY_SESSION));
+      return;
+    }
+    NOTREACHED();
+  }
+  // Then, consult the persistent policy storage.
+  scoped_refptr<const ApplicationData> app_data = GetApplicationDataByID(app_id);
+  if (app_data.get() == NULL) {
+    LOG(ERROR) << "Application data doesn't exist!";
+    // This should not happen -- data doesn't exists for a running
+    // application.
+    base::MessageLoop::current()->PostTask(
+        FROM_HERE, base::Bind(callback, INVALID_RUNTIME_PERM));
+    return;
+  }
+  perm = app_data->GetPermission(permission_name);
+  // Permission not found in persistent permission table, normally this should
+  // not happen because all the permission needed by the application should be
+  // contained in its manifest, so it also means that the application is asking
+  // for something wasn't allowed.
+  if (perm == INVALID_STORED_PERM) {
+    base::MessageLoop::current()->PostTask(
+        FROM_HERE, base::Bind(callback, INVALID_RUNTIME_PERM));
+    return;
+  }
+  if (perm == ASK) {
+    // TODO(Bai): We needed to pop-up a dialog asking user to chose one from
+    // either allow/deny for session/one shot/forever. Then, we need to update
+    // the session and persistent policy accordingly.
+    return;
+  }
+  if (perm == ALLOW) {
+    base::MessageLoop::current()->PostTask(
+        FROM_HERE, base::Bind(callback, ALLOW_FOREVER));
+    return;
+  }
+  if (perm == DENY) {
+    base::MessageLoop::current()->PostTask(
+        FROM_HERE, base::Bind(callback, DENY_FOREVER));
+    return;
+  }
+  NOTREACHED();
+  */
+}
+
 }  // namespace application
 }  // namespace xwalk
