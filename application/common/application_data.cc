@@ -275,5 +275,16 @@ const std::vector<std::string>& ApplicationData::GetEvents() const {
   return events_;
 }
 
+StoredPermission ApplicationData::GetPermission(std::string permission_name) {
+  PermissionMap::iterator iter = permission_map_.find(permission_name);
+  if (iter == permission_map_.end()) {
+    return INVALID_STORED_PERM;
+  }
+  return iter->second;
+}
+void ApplicationData::SetPermission(std::string permission_name, StoredPermission perm) {
+  permission_map_[permission_name] = perm;
+}
+
 }   // namespace application
 }   // namespace xwalk
