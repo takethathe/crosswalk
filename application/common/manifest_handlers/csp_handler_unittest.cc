@@ -41,7 +41,7 @@ class CSPHandlerTest: public testing::Test {
 TEST_F(CSPHandlerTest, NoCSP) {
   scoped_refptr<ApplicationData> application = CreateApplication();
   EXPECT_TRUE(application.get());
-  EXPECT_EQ(GetCSPInfo(application)->GetDirectives().size(), 2);
+  EXPECT_EQ(GetCSPInfo(application)->GetDirectives().size(), 0);
 }
 
 TEST_F(CSPHandlerTest, EmptyCSP) {
