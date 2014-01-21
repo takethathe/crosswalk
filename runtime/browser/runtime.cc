@@ -123,6 +123,16 @@ void Runtime::AttachDefaultWindow() {
   AttachWindow(params);
 }
 
+void Runtime::AttachFullscreenWindow() {
+  NativeAppWindow::CreateParams params;
+  params.delegate = this;
+  params.web_contents = web_contents_.get();
+  params.bounds = gfx::Rect(0, 0, kDefaultWidth, kDefaultHeight);
+  params.state = ui::SHOW_STATE_FULLSCREEN;
+  fullscreen_options_ |= FULLSCREEN_FOR_LAUNCH;
+  AttachWindow(params);
+}
+
 void Runtime::AttachWindow(const NativeAppWindow::CreateParams& params) {
 #if defined(OS_ANDROID)
   NOTIMPLEMENTED();

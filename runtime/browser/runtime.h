@@ -65,6 +65,8 @@ class Runtime : public content::WebContentsDelegate,
 
   // Attach to a default app window.
   void AttachDefaultWindow();
+  // Attach to a fullscreen app window.
+  void AttachFullscreenWindow();
   // Attach to a app window created with 'params'.
   void AttachWindow(const NativeAppWindow::CreateParams& params);
 

@@ -13,6 +13,7 @@ const char kAppMainScriptsKey[] = "app.main.scripts";
 const char kAppMainSourceKey[] = "app.main.source";
 const char kCSPKey[] = "content_security_policy";
 const char kDescriptionKey[] = "description";
+const char kFullscreenKey[] = "fullscreen";
 const char kLaunchLocalPathKey[] = "app.launch.local_path";
 const char kLaunchWebURLKey[] = "app.launch.web_url";
 const char kManifestVersionKey[] = "manifest_version";

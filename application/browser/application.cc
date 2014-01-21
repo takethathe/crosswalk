@@ -100,7 +100,13 @@ bool Application::TryLaunchAt<Application::LaunchLocalPathKey>() {
     // are created.
     main_runtime_= Runtime::Create(runtime_context_, this);
     main_runtime_->LoadURL(url);
-    main_runtime_->AttachDefaultWindow();
+    bool is_fullscreen = false;
+    manifest->GetBoolean(
+        application_manifest_keys::kFullscreenKey, &is_fullscreen);
+    if (is_fullscreen)
+      main_runtime_->AttachFullscreenWindow();
+    else
+      main_runtime_->AttachDefaultWindow();
     return true;
   }
 
