@@ -18,7 +18,9 @@ namespace application {
 
 Package::Package(const base::FilePath& source_path)
     : source_path_(source_path),
-      is_extracted_(false) {
+      is_extracted_(false),
+      is_valid_(false),
+      package_type_(TYPE_UNKNOWN) {
 }
 
 Package::~Package() {
@@ -26,18 +28,18 @@ Package::~Package() {
 
 // static
 scoped_ptr<Package> Package::Create(const base::FilePath& source_path) {
-  if (source_path.MatchesExtension(FILE_PATH_LITERAL(".xpk"))) {
-      scoped_ptr<Package> package(new XPKPackage(source_path));
-      if (!package->IsValid())
-        LOG(ERROR) << "Package not valid";
-      return package.Pass();
-  } else if (source_path.MatchesExtension(FILE_PATH_LITERAL(".wgt"))) {
-     scoped_ptr<Package> package(new WGTPackage(source_path));
-     return package.Pass();
-  }
+  scoped_ptr<Package> package;
+  if (source_path.MatchesExtension(FILE_PATH_LITERAL(".xpk")))
+    package.reset(new XPKPackage(source_path));
+  else if (source_path.MatchesExtension(FILE_PATH_LITERAL(".wgt")))
+    package.reset(new WGTPackage(source_path));
+  else
+    LOG(ERROR) << "Invalid package type. Only .xpk/.wgt supported now";
 
-  LOG(ERROR) << "Invalid package type. Only .xpk/.wgt supported now";
-  return scoped_ptr<Package>();
+  if (package && !package->IsValid())
+    LOG(ERROR) << "Package not valid";
+
+  return package.Pass();
 }
 
 bool Package::Extract(base::FilePath* target_path) {
@@ -46,7 +48,7 @@ bool Package::Extract(base::FilePath* target_path) {
     return true;
   }
 
-  if (!IsValid()) {
+  if (package_type_ == TYPE_XPK && !IsValid()) {
     LOG(ERROR) << "XPK/WGT file is not valid.";
     return false;
   }

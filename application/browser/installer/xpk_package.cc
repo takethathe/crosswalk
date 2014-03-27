@@ -23,6 +23,7 @@ XPKPackage::~XPKPackage() {
 
 XPKPackage::XPKPackage(const base::FilePath& path)
   : Package(path) {
+  package_type_ = TYPE_XPK;
   if (!base::PathExists(path))
     return;
   scoped_ptr<ScopedStdioHandle> file(

@@ -23,6 +23,7 @@ WGTPackage::~WGTPackage() {
 
 WGTPackage::WGTPackage(const base::FilePath& path)
   : Package(path) {
+  package_type_ = TYPE_WGT;
   if (!base::PathExists(path))
     return;
   base::FilePath extracted_path;
@@ -55,6 +56,7 @@ WGTPackage::WGTPackage(const base::FilePath& path)
   if (!value.empty())
     id_ = GenerateId(value);
 
+  is_valid_ = true;
   scoped_ptr<ScopedStdioHandle> file(
         new ScopedStdioHandle(base::OpenFile(path, "rb")));
 

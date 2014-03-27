@@ -22,6 +22,12 @@ namespace application {
 //  XPKPackage::Validate()
 class Package {
  public:
+  enum PackageType {
+    TYPE_XPK,
+    TYPE_WGT,
+    TYPE_UNKNOWN,
+  };
+
   virtual ~Package();
   bool IsValid() const { return is_valid_; }
   const std::string& Id() const { return id_; }
@@ -42,6 +48,8 @@ class Package {
   base::ScopedTempDir temp_dir_;
   // Represent if the package has been extracted.
   bool is_extracted_;
+
+  PackageType package_type_;
 };
 
 }  // namespace application
